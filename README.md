@@ -37,67 +37,7 @@
 
 ## Module Server Interface Protocol
 
-### "**Health Check**" Protocol  
-* Request   
-  {"cmd": "check"}
-* Response
-  * 정상일 경우   
-    {"state": "healthy"}
-  * 비정상일 경우   
-    {"state": "Invalid"}
-
-### "**Run**" Protocol  
-* Request
-```javascript
-  {     
-    "cmd": "run",   
-    "request":
-      {
-        "mmap_fname": memory_map_filename,   
-        "mmap_shape": numpy_array_shape,   
-        "roi": roi_list
-      }
-  }
-```
-  * memory_map_filename 은 numpy memory map 의 파일이름이며 string 타입이다.   
-  * numpy_array_shape 은 numpy array 의 shape 이며 tuple 타입이다.
-  * roi 는 0 과 1 사이의 네개의 실수로 구성되며 list 타입이다.
-
-* Response
-  * 정상일 경우
-  ```javascript
-    {
-      "state": "Done",
-      "response":
-      {
-        "result": success",
-        "obj_info":
-          {
-            "obj_box_arr": obj_box_arr,
-            "obj_name_arr": obj_name_arr,
-            "obj_score_arr": obj_score_arr,
-            "elapsed_time": elapsed_time
-          },
-        "proc_time": proc_time
-      }
-    }
-  ```
-    * obj_box_arr 는 0 과 1 사이의 4 개의 실수로 이루어진 bounding box 의 array 이다.
-    * obj_name_arr 는 검출한 object 이름의 array 이다.
-    * obj_score_arr 는 검출한 object score 의 array 이다.
-    * elapsed_time 은 object detection 에 소요된 시간이다.
-  * 비정상일 경우
-  ```javascript
-    {
-      "state": "Done",
-      "response":
-      {
-        "result": "fail",
-        "description": fail_description
-      }
-    }
-    ```
-    * fail_description 은 정상 동작에 실패한 이유가 기록된다.
+[Click here](https://github.com/neohoon/ObjectDetection/wiki/Module-Server-Interface-Protocol)
 
 ## Module Test
 
