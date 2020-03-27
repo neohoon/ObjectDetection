@@ -44,7 +44,7 @@ def main(args):
 
         request_dict = {"mmap_fname": os.path.abspath(MMAP_FNAME),
                         "mmap_shape": img.shape,
-                        "roi": this.object_detect_ini['roi']}
+                        "roi": this.object_detector_ini['roi']}
         recv_dict, proc_time \
             = uSock.send_run_request_and_recv_response(this.server.ip,
                                                        this.server.port,
@@ -61,7 +61,7 @@ def main(args):
                     recv_dict['obj_info']['obj_box_arr'],
                     obj_name_arr=recv_dict['obj_info']['obj_name_arr'],
                     obj_score_arr=recv_dict['obj_info']['obj_score_arr'],
-                    roi=this.object_detect_ini['roi'],
+                    roi=this.object_detector_ini['roi'],
                     color=0,
                     thickness=2,
                     alpha=0)

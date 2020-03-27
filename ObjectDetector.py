@@ -28,26 +28,26 @@ _this_basename_ = os.path.splitext(os.path.basename(__file__))[0]
 CV2_FONT = cv2.FONT_HERSHEY_SIMPLEX
 
 
-class ObjectDetectionOpMode(Enum):
+class ObjectDetectorOpMode(Enum):
     img_path_proc = 1
     vid_file_proc = 2
     img_proc_server = 3
 
 
-class ObjectDetection:
+class ObjectDetector:
     def __init__(self, ini=None, logger=None, logging_=True, stdout_=True):
         self.ini = ini
         self.logger = logger
         self.logging_ = logging_
         self.stdout_ = stdout_
 
-        self.object_detect_ini = None
+        self.object_detector_ini = None
         self.yolo_ini = None
 
         self.inst_ini = None
         self.inst = None
-        self.detect_height = None
-        self.detect_width = None
+        self.detector_height = None
+        self.detector_width = None
 
         self.vid_fname = None
 
@@ -74,14 +74,13 @@ class ObjectDetection:
 
     def init_ini(self):
         self.ini = utils.remove_comments_in_ini(self.ini)
-        self.object_detect_ini = dict(self.ini['OBJECT_DETECT'])
+        self.object_detector_ini = dict(self.ini['OBJECT_DETECT'])
         self.yolo_ini = dict(self.ini['YOLO'])
 
-        self.object_detect_ini['fps'] = int(eval(self.object_detect_ini['fps']))
-        self.object_detect_ini['roi'] = \
-            [float(x.strip()) for x in self.object_detect_ini['roi'].split(',')]
-        self.object_detect_ini['detect_height'] = int(self.object_detect_ini["detect_height"])
-        self.detect_height = self.object_detect_ini['detect_height']
+        self.object_detector_ini['fps'] = int(eval(self.object_detector_ini['fps']))
+        self.object_detector_ini['roi'] = eval(self.object_detector_ini['roi'])
+        self.object_detector_ini['detector_height'] = int(self.object_detector_ini["detector_height"])
+        self.detector_height = self.object_detector_ini['detector_height']
 
     def init_server_mode(self, ini):
         self.server = uSock.Server(ini=ini)
@@ -89,11 +88,11 @@ class ObjectDetection:
 
     def init_detect_method(self):
         self.logger.info(" # Object Detection method initialization...")
-        if self.object_detect_ini['detect_method'] == 'YOLO':
+        if self.object_detector_ini['detect_method'] == 'YOLO':
             self.inst = self.YoloWrapper(ini=self.yolo_ini, logger=self.logger)
             self.inst_ini = self.yolo_ini
         else:
-            self.logger.error(" @ Incorrect detection method, {}".format(self.object_detect_ini['detect_method']))
+            self.logger.error(" @ Incorrect detection method, {}".format(self.object_detector_ini['detect_method']))
             sys.exit()
 
     class YoloWrapper:
@@ -178,25 +177,25 @@ class ObjectDetection:
         stt_time = time.time()
 
         width, height = img.shape[1], img.shape[0]
-        if self.detect_height > 0:
-            detect_width = int(self.detect_height / float(height) * width)
-            detect_height = self.detect_height
+        if self.detector_height > 0:
+            detector_width = int(self.detector_height / float(height) * width)
+            detector_height = self.detector_height
             resize_img = utils.imresize(img,
-                                        width=detect_width,
-                                        height=detect_height,
+                                        width=detector_width,
+                                        height=detector_height,
                                         interpolation=cv2.INTER_CUBIC)
             self.logger.info(" # Resize image from {:d} x {:d} to {:d} x {:d}.".
-                             format(width, height, detect_width, detect_height))
+                             format(width, height, detector_width, detector_height))
         else:
-            detect_height = height
-            detect_width = width
+            detector_height = height
+            detector_width = width
             resize_img = img
-        scale = detect_height / float(height)
+        scale = detector_height / float(height)
 
-        x0 = int(detect_width  * self.object_detect_ini['roi'][0])
-        y0 = int(detect_height * self.object_detect_ini['roi'][1])
-        x1 = int(detect_width  * self.object_detect_ini['roi'][2])
-        y1 = int(detect_height * self.object_detect_ini['roi'][3])
+        x0 = int(detector_width  * self.object_detector_ini['roi'][0])
+        y0 = int(detector_height * self.object_detector_ini['roi'][1])
+        x1 = int(detector_width  * self.object_detector_ini['roi'][2])
+        y1 = int(detector_height * self.object_detector_ini['roi'][3])
 
         crop_img = resize_img[y0:y1, x0:x1]
 
@@ -217,15 +216,15 @@ class ObjectDetection:
 
         return scale_obj_box_arr, obj_name_arr, obj_score_arr, elapsed_time
 
-    def detect_objects_in_an_image(self,
-                                   img,
-                                   img_fname=None,
-                                   imshow_sec=-1,
-                                   show_video_=False,
-                                   out_folder=".",
-                                   save_obj_img_=False,
-                                   save_obj_info_=False,
-                                   logger=utils.get_stdout_logger()):
+    def detect_objects_in_image(self,
+                                img,
+                                img_fname=None,
+                                imshow_sec=-1,
+                                show_video_=False,
+                                out_folder=".",
+                                save_obj_img_=False,
+                                save_obj_info_=False,
+                                logger=utils.get_stdout_logger()):
 
         logger.info(" # Read image, {}".format(img_fname))
         obj_box_arr, obj_name_arr, obj_score_arr, elapsed_time = self.detect_object(img)
@@ -238,7 +237,7 @@ class ObjectDetection:
                                                    obj_box_arr,
                                                    obj_name_arr=obj_name_arr,
                                                    obj_score_arr=obj_score_arr,
-                                                   roi=self.object_detect_ini['roi'],
+                                                   roi=self.object_detector_ini['roi'],
                                                    color=0,
                                                    thickness=2,
                                                    alpha=0)
@@ -280,13 +279,13 @@ class ObjectDetection:
 
         for img_fname in img_fnames:
             img = utils.imread(img_fname)
-            self.detect_objects_in_an_image(img,
-                                            img_fname=img_fname,
-                                            imshow_sec=imshow_sec,
-                                            out_folder=out_folder,
-                                            save_obj_img_=save_obj_img_,
-                                            save_obj_info_=save_obj_info_,
-                                            logger=logger)
+            self.detect_objects_in_image(img,
+                                         img_fname=img_fname,
+                                         imshow_sec=imshow_sec,
+                                         out_folder=out_folder,
+                                         save_obj_img_=save_obj_img_,
+                                         save_obj_info_=save_obj_info_,
+                                         logger=logger)
 
     def process_vid(self,
                     vid_file,
@@ -301,7 +300,7 @@ class ObjectDetection:
 
         vid_cap = cv2.VideoCapture(vid_file)
         # vid_info = uVid.get_vid_info(vid_file, print_=True)
-        fps = vid_cap.get(cv2.CAP_PROP_FPS) if self.object_detect_ini['fps'] == 0 else self.object_detect_ini['fps']
+        fps = vid_cap.get(cv2.CAP_PROP_FPS) if self.object_detector_ini['fps'] == 0 else self.object_detector_ini['fps']
 
         out_vid_fname = None
         out_vid = None
@@ -327,13 +326,13 @@ class ObjectDetection:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             ret_, obj_info, obj_img = \
-                self.detect_objects_in_an_image(frame,
-                                                img_fname="{:d} at {:.3f} sec".format(count + 1, time_stamp),
-                                                show_video_=show_video_,
-                                                out_folder=out_folder,
-                                                save_obj_img_=False,
-                                                save_obj_info_=False,
-                                                logger=logger)
+                self.detect_objects_in_image(frame,
+                                             img_fname="{:d} at {:.3f} sec".format(count + 1, time_stamp),
+                                             show_video_=show_video_,
+                                             out_folder=out_folder,
+                                             save_obj_img_=False,
+                                             save_obj_info_=False,
+                                             logger=logger)
             if not ret_:
                 return
 
@@ -353,7 +352,7 @@ class ObjectDetection:
 
     def process_request(self, request_dict, logger=utils.get_stdout_logger()):
         try:
-            self.object_detect_ini['roi'] = request_dict['roi']
+            self.object_detector_ini['roi'] = request_dict['roi']
             img = np.memmap(request_dict['mmap_fname'], dtype='uint8', mode='r',
                             shape=tuple(request_dict['mmap_shape']))
         except all:
@@ -361,13 +360,13 @@ class ObjectDetection:
                     'description': 'something wrong in request_dict, {}'.format(str(request_dict))}
 
         ret_, obj_info, obj_img = \
-            self.detect_objects_in_an_image(img,
-                                            img_fname="{}.jpg".format(utils.get_datetime()),
-                                            imshow_sec=-1,
-                                            out_folder=self.out_folder,
-                                            save_obj_img_=self.save_obj_img_,
-                                            save_obj_info_=self.save_obj_info_,
-                                            logger=logger)
+            self.detect_objects_in_image(img,
+                                         img_fname="{}.jpg".format(utils.get_datetime()),
+                                         imshow_sec=-1,
+                                         out_folder=self.out_folder,
+                                         save_obj_img_=self.save_obj_img_,
+                                         save_obj_info_=self.save_obj_info_,
+                                         logger=logger)
 
         return {'result': 'success',
                 'obj_info': obj_info}
@@ -375,15 +374,15 @@ class ObjectDetection:
 
 def main(args):
 
-    this = ObjectDetection(ini=utils.get_ini_parameters(args.ini_fname),
-                           logging_=args.logging_,
-                           stdout_=args.stdout_)
-    op_mode = ObjectDetectionOpMode[args.op_mode]
-    this.logger.info(" # ObjectDetection starts with \"{}\" operation mode...".format(op_mode.name))
+    this = ObjectDetector(ini=utils.get_ini_parameters(args.ini_fname),
+                          logging_=args.logging_,
+                          stdout_=args.stdout_)
+    op_mode = ObjectDetectorOpMode[args.op_mode]
+    this.logger.info(" # ObjectDetector starts with \"{}\" operation mode...".format(op_mode.name))
     this.init_detect_method()
     utils.check_directory_existence(args.out_folder, create_=True)
 
-    if op_mode is ObjectDetectionOpMode.img_path_proc:
+    if op_mode is ObjectDetectorOpMode.img_path_proc:
         this.process_img(args.in_path,
                          out_folder=args.out_folder,
                          imshow_sec=-1,
@@ -391,7 +390,7 @@ def main(args):
                          save_obj_info_=args.save_obj_info_,
                          logger=this.logger)
 
-    elif op_mode is ObjectDetectionOpMode.vid_file_proc:
+    elif op_mode is ObjectDetectorOpMode.vid_file_proc:
         this.process_vid(args.in_path,
                          out_folder=args.out_folder,
                          save_obj_vid_=True,
@@ -399,7 +398,7 @@ def main(args):
                          save_obj_info_=args.save_obj_info_,
                          logger=this.logger)
 
-    elif op_mode is ObjectDetectionOpMode.img_proc_server:
+    elif op_mode is ObjectDetectorOpMode.img_proc_server:
         this.out_folder = args.out_folder
         this.save_obj_img_ = args.save_obj_img_
         this.save_obj_info_ = args.save_obj_info_
@@ -414,7 +413,7 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--op_mode", help="operation mode", required=True,
-                        choices=[x.name for x in ObjectDetectionOpMode])
+                        choices=[x.name for x in ObjectDetectorOpMode])
     parser.add_argument("--ini_fname", required=True, help="ini filename")
     parser.add_argument("--in_path", required=True, help="Input image or video file path")
     parser.add_argument("--out_folder", default="./Output", help="Output folder")
@@ -431,21 +430,26 @@ def parse_arguments(argv):
 
 
 SELF_TEST_ = True
-INI_FNAME = "ObjectDetection.ini"
-
+INI_FNAME = "FaceRecognition.ini"
 # OP_MODE = "img_path_proc"
-# # IN_PATH = "./Input/baggage_claim.jpg"
-# IN_PATH = "./Input/"
-# OUT_FOLDER = "./Output/"
+OP_MODE = "vid_file_proc"
+# OP_MODE = 'img_proc_server'
 
-# OP_MODE = "vid_file_proc"
-# # IN_PATH = "./Input/overpass.mp4"
-# IN_PATH = "./Input/airport.mp4"
-# OUT_FOLDER = "./Output/"
-
-OP_MODE = 'img_proc_server'
-IN_PATH = ''
-OUT_FOLDER = "./Output/Server/"
+if OP_MODE == 'img_path_proc':
+    # IN_PATH = "./Input/baggage_claim.jpg"
+    IN_PATH = "./Input/"
+    OUT_FOLDER = "./Output/"
+elif OP_MODE == 'vid_file_proc':
+    # IN_PATH = "./Input/overpass.mp4"
+    # IN_PATH = "./Input/airport.mp4"
+    IN_PATH = "./Input/drone_tracking_subject.mp4"
+    OUT_FOLDER = "./Output/"
+elif OP_MODE == 'img_proc_server':
+    IN_PATH = ''
+    OUT_FOLDER = "./Output/Server/"
+else:
+    IN_PATH = "./Input/"
+    OUT_FOLDER = "./Output/"
 
 
 if __name__ == "__main__":
