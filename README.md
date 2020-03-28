@@ -68,8 +68,11 @@
 * ini['OBJECT_DETECT']['roi'] 값을 변화시켜 가면서 object detection 결과를 확인해야 한다.
 
 ## Module Test Summary
-| category | Task | Result | Remark |
-| -------- | -----| ----------- | ------ |
-| Operation test | Image path processing   | Y |  |
-| Operation test | Video path processing   | Y |  |
-| Operation test | Image processing server | Y |  |
+| category       | Task                    | Verification | Remark |
+| -------------- | ------------------------| ------------ | ------ |
+| Operation test | Image path processing   | hoon@200326  |        |
+| Operation test | Video path processing   | hoon@200326  |        |
+| Operation test | Image processing server | hoon@200326  |        |
+| Parameter test | detect_height           | hoon@200326  |        |
+| Parameter test | roi                     | hoon@200326  |        |
+| Parameter test | tracker_                | hoon@200328  |        |
