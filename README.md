@@ -3,9 +3,11 @@
 
 ## description
 * Object detection 을 수행하는 모듈이다.
+* 입력이 video 일 경우, detected object 에 대한 tracking 기능도 제공한다.
 * 제공하는 algorithm
   * YOLO34
     * CPU version 과 GPU version 을 모두 지원한다.
+  * DeepSort
 * 3 개의 동작 모드를 제공한다.
   * image path processing
   * video file processing
